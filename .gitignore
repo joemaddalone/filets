@@ -1,0 +1,11 @@
+# Dependencies
+node_modules
+
+# Build
+dist
+
+# Test
+coverage
+
+# Bullshit sometimes...
+.DS_Store
