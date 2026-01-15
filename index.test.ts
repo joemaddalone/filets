@@ -1,7 +1,13 @@
-import { expect, test, describe, vi, beforeEach } from "vitest";
 import { Filets } from "./index";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import {
+	beforeEach,
+	describe,
+	expect,
+	test,
+	vi
+} from "vitest";
 
 vi.mock("node:fs", () => ({
 	existsSync: vi.fn(),
@@ -24,7 +30,10 @@ describe("Filets", () => {
 		test("should create directory if it doesn't exist", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(false);
 			Filets.ensureDirectoryExists("/test/dir");
-			expect(fs.mkdirSync).toHaveBeenCalledWith("/test/dir", { recursive: true, mode: 0o755 });
+			expect(fs.mkdirSync).toHaveBeenCalledWith("/test/dir", {
+				recursive: true,
+				mode: 0o755,
+			});
 		});
 
 		test("should not create directory if it already exists", () => {
@@ -38,7 +47,9 @@ describe("Filets", () => {
 			vi.mocked(fs.mkdirSync).mockImplementationOnce(() => {
 				throw new Error("Permission denied");
 			});
-			expect(() => Filets.ensureDirectoryExists("/test/dir")).toThrow("Failed to create directory: Permission denied");
+			expect(() => Filets.ensureDirectoryExists("/test/dir")).toThrow(
+				"Failed to create directory: Permission denied",
+			);
 		});
 	});
 
@@ -66,7 +77,9 @@ describe("Filets", () => {
 		});
 
 		test("should replace spaces with hyphens", () => {
-			expect(Filets.sanitizeFilename("file name with spaces")).toBe("file-name-with-spaces");
+			expect(Filets.sanitizeFilename("file name with spaces")).toBe(
+				"file-name-with-spaces",
+			);
 		});
 
 		test("should limit length to 255 characters", () => {
@@ -80,7 +93,11 @@ describe("Filets", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
 			const data = { foo: "bar" };
 			Filets.writeJsonFile("/test/file.json", data);
-			expect(fs.writeFileSync).toHaveBeenCalledWith("/test/file.json", JSON.stringify(data, null, 2), "utf8");
+			expect(fs.writeFileSync).toHaveBeenCalledWith(
+				"/test/file.json",
+				JSON.stringify(data, null, 2),
+				"utf8",
+			);
 		});
 
 		test("should throw error if write fails", () => {
@@ -88,7 +105,9 @@ describe("Filets", () => {
 			vi.mocked(fs.writeFileSync).mockImplementationOnce(() => {
 				throw new Error("Disk full");
 			});
-			expect(() => Filets.writeJsonFile("/test/file.json", {})).toThrow("Failed to write JSON file: Disk full");
+			expect(() => Filets.writeJsonFile("/test/file.json", {})).toThrow(
+				"Failed to write JSON file: Disk full",
+			);
 		});
 	});
 
@@ -96,7 +115,11 @@ describe("Filets", () => {
 		test("should write text content to file", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
 			Filets.writeTextFile("/test/file.txt", "hello world");
-			expect(fs.writeFileSync).toHaveBeenCalledWith("/test/file.txt", "hello world", "utf8");
+			expect(fs.writeFileSync).toHaveBeenCalledWith(
+				"/test/file.txt",
+				"hello world",
+				"utf8",
+			);
 		});
 	});
 
@@ -116,14 +139,18 @@ describe("Filets", () => {
 		test("should return true if path exists and is a directory", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
 			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
-			vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as any);
+			vi.mocked(fs.statSync).mockReturnValue({
+				isDirectory: () => true,
+			} as any);
 			expect(Filets.directoryExists("/path/to/dir")).toBe(true);
 		});
 
 		test("should return false if path is a file", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
 			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
-			vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as any);
+			vi.mocked(fs.statSync).mockReturnValue({
+				isDirectory: () => false,
+			} as any);
 			expect(Filets.directoryExists("/path/to/file")).toBe(false);
 		});
 	});
@@ -140,10 +167,18 @@ describe("Filets", () => {
 		test("should return file names in directory", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
 			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
-			vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as any);
+			vi.mocked(fs.statSync).mockReturnValue({
+				isDirectory: () => true,
+			} as any);
 			// biome-ignore lint/suspicious/noExplicitAny: mocking readdirSync return
-			vi.mocked(fs.readdirSync).mockReturnValue(["file1.ts", "file2.ts"] as any);
-			expect(Filets.getDirectoryContents("/path/to/dir")).toEqual(["file1.ts", "file2.ts"]);
+			vi.mocked(fs.readdirSync).mockReturnValue([
+				"file1.ts",
+				"file2.ts",
+			] as any);
+			expect(Filets.getDirectoryContents("/path/to/dir")).toEqual([
+				"file1.ts",
+				"file2.ts",
+			]);
 		});
 
 		test("should return empty array if directory doesn't exist", () => {
@@ -170,9 +205,14 @@ describe("Filets", () => {
 		test("should remove directory recursively if it exists", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
 			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
-			vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as any);
+			vi.mocked(fs.statSync).mockReturnValue({
+				isDirectory: () => true,
+			} as any);
 			Filets.removeDirectory("/path/to/dir");
-			expect(fs.rmSync).toHaveBeenCalledWith("/path/to/dir", { recursive: true, force: true });
+			expect(fs.rmSync).toHaveBeenCalledWith("/path/to/dir", {
+				recursive: true,
+				force: true,
+			});
 		});
 	});
 
@@ -180,13 +220,18 @@ describe("Filets", () => {
 		test("should call copyFileSync and ensure dest dir exists", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true); // dest dir exists
 			Filets.copyFile("/src/file", "/dest/dir/file");
-			expect(fs.copyFileSync).toHaveBeenCalledWith("/src/file", "/dest/dir/file");
+			expect(fs.copyFileSync).toHaveBeenCalledWith(
+				"/src/file",
+				"/dest/dir/file",
+			);
 		});
 	});
 
 	describe("path utilities", () => {
 		test("getAbsolutePath should resolve path", () => {
-			expect(Filets.getAbsolutePath("relative/path")).toBe(path.resolve("relative/path"));
+			expect(Filets.getAbsolutePath("relative/path")).toBe(
+				path.resolve("relative/path"),
+			);
 		});
 
 		test("getRelativePath should return relative path", () => {

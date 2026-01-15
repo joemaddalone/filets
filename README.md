@@ -11,7 +11,7 @@ Filets is a collection of file system tools for Node.js. It is a File tool in Ty
 ## Installation
 
 ```bash
-npm install filets
+npm install @joemaddalone/filets
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ npm install filets
 Import the Filets class and use it:
 
 ```typescript
-import { Filets } from "filets";
+import { Filets } from "@joemaddalone/filets";
 
 // Ensure a directory exists
 Filets.ensureDirectoryExists("./my-directory");
