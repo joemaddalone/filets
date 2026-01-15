@@ -27,9 +27,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 export class Filets {
 	/**
@@ -41,7 +40,11 @@ export class Filets {
 				fs.mkdirSync(dirPath, { recursive: true, mode: 0o755 });
 			}
 		} catch (error) {
-			throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to create directory: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
 	}
 
@@ -51,8 +54,8 @@ export class Filets {
 	public static isWritable(dirPath: string): boolean {
 		try {
 			// Try to create a temporary file to test write permissions
-			const testFile = path.join(dirPath, '.write-test');
-			fs.writeFileSync(testFile, 'test');
+			const testFile = path.join(dirPath, ".write-test");
+			fs.writeFileSync(testFile, "test");
 			fs.unlinkSync(testFile);
 			return true;
 		} catch {
@@ -65,12 +68,12 @@ export class Filets {
 	 */
 	public static sanitizeFilename(filename: string): string {
 		return filename
-			.replace(/[<>:"/\\|?*]/g, '-') // Replace invalid characters
-			.replace(/[''""`´]/g, '') // Remove apostrophes and quotes
-			.replace(/[.,;:!@#$%^&*()_+={}\[\]|\\/]/g, '') // Remove other punctuation
-			.replace(/\s+/g, '-') // Replace spaces with hyphens
-			.replace(/-+/g, '-') // Replace multiple hyphens with single
-			.replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+			.replace(/[<>:"/\\|?*]/g, "-") // Replace invalid characters
+			.replace(/[''""`´]/g, "") // Remove apostrophes and quotes
+			.replace(/[.,;:!@#$%^&*()_+={}\[\]|\\/]/g, "") // Remove other punctuation
+			.replace(/\s+/g, "-") // Replace spaces with hyphens
+			.replace(/-+/g, "-") // Replace multiple hyphens with single
+			.replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
 			.substring(0, 255); // Limit length
 	}
 
@@ -84,10 +87,23 @@ export class Filets {
 			Filets.ensureDirectoryExists(dirPath);
 
 			// Write JSON file
-			fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+			fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
 		} catch (error) {
-			throw new Error(`Failed to write JSON file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to write JSON file: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
+	}
+
+	/**
+	 *
+	 * Read a json file
+	 */
+	public static readJsonFile(filePath: string): object  {
+		const json = fs.readFileSync(filePath, "utf8");
+		return JSON.parse(json);
 	}
 
 	/**
@@ -100,9 +116,13 @@ export class Filets {
 			Filets.ensureDirectoryExists(dirPath);
 
 			// Write text file
-			fs.writeFileSync(filePath, content, 'utf8');
+			fs.writeFileSync(filePath, content, "utf8");
 		} catch (error) {
-			throw new Error(`Failed to write text file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to write text file: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
 	}
 
@@ -136,7 +156,11 @@ export class Filets {
 			const stats = fs.statSync(filePath);
 			return stats.size;
 		} catch (error) {
-			throw new Error(`Failed to get file size: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to get file size: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
 	}
 
@@ -150,7 +174,11 @@ export class Filets {
 			}
 			return fs.readdirSync(dirPath);
 		} catch (error) {
-			throw new Error(`Failed to read directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to read directory: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
 	}
 
@@ -163,7 +191,11 @@ export class Filets {
 				fs.unlinkSync(filePath);
 			}
 		} catch (error) {
-			throw new Error(`Failed to remove file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to remove file: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
 	}
 
@@ -176,7 +208,11 @@ export class Filets {
 				fs.rmSync(dirPath, { recursive: true, force: true });
 			}
 		} catch (error) {
-			throw new Error(`Failed to remove directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to remove directory: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
 	}
 
@@ -192,7 +228,11 @@ export class Filets {
 			// Copy file
 			fs.copyFileSync(sourcePath, destPath);
 		} catch (error) {
-			throw new Error(`Failed to copy file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to copy file: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`,
+			);
 		}
 	}
 
