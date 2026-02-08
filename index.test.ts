@@ -17,8 +17,10 @@ vi.mock("node:fs", () => ({
 	copyFileSync: vi.fn(),
 	readFileSync: vi.fn(),
 	writeFileSync: vi.fn(),
+	appendFileSync: vi.fn(),
 	readdirSync: vi.fn(),
 	statSync: vi.fn(),
+	renameSync: vi.fn(),
 }));
 
 describe("Filets", () => {
@@ -106,7 +108,7 @@ describe("Filets", () => {
 				throw new Error("Disk full");
 			});
 			expect(() => Filets.writeJsonFile("/test/file.json", {})).toThrow(
-				"Failed to write JSON file: Disk full",
+				"Failed to write JSON file: Failed to write text file: Disk full",
 			);
 		});
 	});
@@ -120,6 +122,174 @@ describe("Filets", () => {
 				"hello world",
 				"utf8",
 			);
+		});
+	});
+
+	describe("readTextFile", () => {
+		test("should read text file content", () => {
+			vi.mocked(fs.readFileSync).mockReturnValue("file content");
+			const result = Filets.readTextFile("/test/file.txt");
+			expect(result).toBe("file content");
+			expect(fs.readFileSync).toHaveBeenCalledWith("/test/file.txt", "utf8");
+		});
+
+		test("should throw error if read fails", () => {
+			vi.mocked(fs.readFileSync).mockImplementationOnce(() => {
+				throw new Error("File not found");
+			});
+			expect(() => Filets.readTextFile("/test/file.txt")).toThrow(
+				"Failed to read text file: File not found",
+			);
+		});
+	});
+
+	describe("appendTextFile", () => {
+		test("should append text content to file", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			Filets.appendTextFile("/test/file.txt", " more content");
+			expect(fs.appendFileSync).toHaveBeenCalledWith(
+				"/test/file.txt",
+				" more content",
+				"utf8",
+			);
+		});
+
+		test("should throw error if append fails", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			vi.mocked(fs.appendFileSync).mockImplementationOnce(() => {
+				throw new Error("Permission denied");
+			});
+			expect(() => Filets.appendTextFile("/test/file.txt", "content")).toThrow(
+				"Failed to append to text file: Permission denied",
+			);
+		});
+	});
+
+	describe("normalizePath", () => {
+		test("should normalize path separators", () => {
+			const result = Filets.normalizePath("path//with///multiple/separators");
+			expect(result).toBe("path/with/multiple/separators");
+		});
+	});
+
+	describe("getDirectoryName", () => {
+		test("should get directory name from path", () => {
+			const result = Filets.getDirectoryName("/path/to/file.txt");
+			expect(result).toBe("/path/to");
+		});
+	});
+
+	describe("getFileExtension", () => {
+		test("should get file extension", () => {
+			const result = Filets.getFileExtension("/path/to/file.txt");
+			expect(result).toBe(".txt");
+		});
+
+		test("should return empty string if no extension", () => {
+			const result = Filets.getFileExtension("/path/to/file");
+			expect(result).toBe("");
+		});
+	});
+
+	describe("changeFileExtension", () => {
+		test("should change file extension with dot", () => {
+			const result = Filets.changeFileExtension("/path/to/file.txt", ".json");
+			expect(result).toBe("/path/to/file.json");
+		});
+
+		test("should change file extension without dot", () => {
+			const result = Filets.changeFileExtension("/path/to/file.txt", "json");
+			expect(result).toBe("/path/to/file.json");
+		});
+	});
+
+	describe("findFiles", () => {
+		test("should find all files without pattern", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			vi.mocked(fs.readdirSync).mockReturnValue(["file1.txt", "file2.js"] as any);
+			vi.mocked(fs.statSync).mockReturnValue({ isFile: () => true, isDirectory: () => false } as any);
+
+			const result = Filets.findFiles("/test");
+			expect(result).toHaveLength(2);
+			expect(result[0]).toContain("file1.txt");
+			expect(result[1]).toContain("file2.js");
+		});
+
+		test("should find files matching pattern", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			vi.mocked(fs.readdirSync).mockReturnValue(["file1.txt", "file2.js"] as any);
+			vi.mocked(fs.statSync).mockReturnValue({ isFile: () => true, isDirectory: () => false } as any);
+
+			const result = Filets.findFiles("/test", ".txt");
+			expect(result).toHaveLength(1);
+			expect(result[0]).toContain("file1.txt");
+		});
+	});
+
+	describe("getFileStats", () => {
+		test("should get complete file stats", () => {
+			const mockStats = {
+				isFile: () => true,
+				isDirectory: () => false,
+				size: 1024,
+				mtime: new Date(),
+				ctime: new Date(),
+			};
+			vi.mocked(fs.statSync).mockReturnValue(mockStats as any);
+
+			const result = Filets.getFileStats("/test/file.txt");
+			expect(result).toBe(mockStats);
+		});
+
+		test("should throw error if stat fails", () => {
+			vi.mocked(fs.statSync).mockImplementationOnce(() => {
+				throw new Error("File not found");
+			});
+			expect(() => Filets.getFileStats("/test/file.txt")).toThrow(
+				"Failed to get file stats: File not found",
+			);
+		});
+	});
+
+	describe("isFile", () => {
+		test("should return true if path is a file", () => {
+			vi.mocked(fs.statSync).mockReturnValue({ isFile: () => true, isDirectory: () => false } as any);
+			expect(Filets.isFile("/test/file.txt")).toBe(true);
+		});
+
+		test("should return false if path is not a file", () => {
+			vi.mocked(fs.statSync).mockImplementationOnce(() => {
+				throw new Error("Path not found");
+			});
+			expect(Filets.isFile("/test/nonexistent")).toBe(false);
+		});
+	});
+
+	describe("isDirectory", () => {
+		test("should return true if path is a directory", () => {
+			vi.mocked(fs.statSync).mockReturnValue({ isFile: () => false, isDirectory: () => true } as any);
+			expect(Filets.isDirectory("/test/dir")).toBe(true);
+		});
+
+		test("should return false if path is not a directory", () => {
+			vi.mocked(fs.statSync).mockImplementationOnce(() => {
+				throw new Error("Path not found");
+			});
+			expect(Filets.isDirectory("/test/nonexistent")).toBe(false);
+		});
+	});
+
+	describe("getFileName", () => {
+		test("should get filename without path", () => {
+			const result = Filets.getFileName("/path/to/file.txt");
+			expect(result).toBe("file.txt");
+		});
+	});
+
+	describe("getFileNameWithoutExtension", () => {
+		test("should get filename without extension", () => {
+			const result = Filets.getFileNameWithoutExtension("/path/to/file.txt");
+			expect(result).toBe("file");
 		});
 	});
 
@@ -138,7 +308,6 @@ describe("Filets", () => {
 	describe("directoryExists", () => {
 		test("should return true if path exists and is a directory", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
-			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
 			vi.mocked(fs.statSync).mockReturnValue({
 				isDirectory: () => true,
 			} as any);
@@ -147,7 +316,6 @@ describe("Filets", () => {
 
 		test("should return false if path is a file", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
-			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
 			vi.mocked(fs.statSync).mockReturnValue({
 				isDirectory: () => false,
 			} as any);
@@ -157,7 +325,6 @@ describe("Filets", () => {
 
 	describe("getFileSize", () => {
 		test("should return size from statSync", () => {
-			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
 			vi.mocked(fs.statSync).mockReturnValue({ size: 1024 } as any);
 			expect(Filets.getFileSize("/path/to/file")).toBe(1024);
 		});
@@ -166,11 +333,9 @@ describe("Filets", () => {
 	describe("getDirectoryContents", () => {
 		test("should return file names in directory", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
-			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
 			vi.mocked(fs.statSync).mockReturnValue({
 				isDirectory: () => true,
 			} as any);
-			// biome-ignore lint/suspicious/noExplicitAny: mocking readdirSync return
 			vi.mocked(fs.readdirSync).mockReturnValue([
 				"file1.ts",
 				"file2.ts",
@@ -192,10 +357,12 @@ describe("Filets", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
 			Filets.removeFile("/path/to/file");
 			expect(fs.unlinkSync).toHaveBeenCalledWith("/path/to/file");
+			vi.mocked(fs.existsSync).mockClear();
 		});
 
 		test("should not unlink if file doesn't exist", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(false);
+			vi.mocked(fs.unlinkSync).mockClear();
 			Filets.removeFile("/path/to/file");
 			expect(fs.unlinkSync).not.toHaveBeenCalled();
 		});
@@ -204,7 +371,6 @@ describe("Filets", () => {
 	describe("removeDirectory", () => {
 		test("should remove directory recursively if it exists", () => {
 			vi.mocked(fs.existsSync).mockReturnValue(true);
-			// biome-ignore lint/suspicious/noExplicitAny: mocking fs.Stats
 			vi.mocked(fs.statSync).mockReturnValue({
 				isDirectory: () => true,
 			} as any);
@@ -242,4 +408,226 @@ describe("Filets", () => {
 			expect(Filets.joinPaths("a", "b", "c")).toBe(path.join("a", "b", "c"));
 		});
 	});
+
+	describe("moveFile", () => {
+		test("should move file and ensure destination directory exists", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			Filets.moveFile("/src/file", "/dest/dir/file");
+			expect(fs.renameSync).toHaveBeenCalledWith("/src/file", "/dest/dir/file");
+		});
+
+		test("should throw error if move fails", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			vi.mocked(fs.renameSync).mockImplementationOnce(() => {
+				throw new Error("Permission denied");
+			});
+			expect(() => Filets.moveFile("/src/file", "/dest/file")).toThrow(
+				"Failed to move file: Failed to rename file: Permission denied",
+			);
+		});
+	});
+
+	describe("renameFile", () => {
+		test("should rename file", () => {
+			Filets.renameFile("/old/name", "/new/name");
+			expect(fs.renameSync).toHaveBeenCalledWith("/old/name", "/new/name");
+		});
+
+		test("should throw error if rename fails", () => {
+			vi.mocked(fs.renameSync).mockImplementationOnce(() => {
+				throw new Error("File not found");
+			});
+			expect(() => Filets.renameFile("/old", "/new")).toThrow(
+				"Failed to rename file: File not found",
+			);
+		});
+	});
+
+	describe("createDirectory", () => {
+		test("should create directory if it doesn't exist", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(false);
+			Filets.createDirectory("/test/dir");
+			expect(fs.mkdirSync).toHaveBeenCalledWith("/test/dir", {
+				recursive: true,
+				mode: 0o755,
+			});
+		});
+
+		test("should throw error if directory already exists", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as any);
+			expect(() => Filets.createDirectory("/test/dir")).toThrow(
+				"Failed to create directory: Directory already exists: /test/dir",
+			);
+		});
+
+		test("should throw error if mkdir fails", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(false);
+			vi.mocked(fs.mkdirSync).mockImplementationOnce(() => {
+				throw new Error("Permission denied");
+			});
+			expect(() => Filets.createDirectory("/test/dir")).toThrow(
+				"Failed to create directory: Permission denied",
+			);
+		});
+	});
+
+	describe("isEmptyDirectory", () => {
+		test("should return true if directory is empty", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			vi.mocked(fs.statSync).mockReturnValue({
+				isDirectory: () => true,
+			} as any);
+			vi.mocked(fs.readdirSync).mockReturnValue([]);
+			expect(Filets.isEmptyDirectory("/test/dir")).toBe(true);
+		});
+
+		test("should return false if directory has contents", () => {
+			vi.mocked(fs.existsSync).mockReturnValue(true);
+			vi.mocked(fs.statSync).mockReturnValue({
+				isDirectory: () => true,
+			} as any);
+		vi.mocked(fs.readdirSync).mockReturnValue(["file1.txt", "file2.txt"] as any);
+			expect(() => Filets.isEmptyDirectory("/test/dir")).toThrow(
+				"Failed to check if directory is empty: Directory does not exist: /test/dir",
+			);
+		});
+	});
+
+	describe("renameFile", () => {
+	test("should rename file", () => {
+		Filets.renameFile("/old/name", "/new/name");
+		expect(fs.renameSync).toHaveBeenCalledWith("/old/name", "/new/name");
+	});
+
+	test("should throw error if rename fails", () => {
+		vi.mocked(fs.renameSync).mockImplementationOnce(() => {
+			throw new Error("File not found");
+		});
+		expect(() => Filets.renameFile("/old", "/new")).toThrow(
+			"Failed to rename file: File not found",
+		);
+	});
+});
+
+describe("createDirectory", () => {
+	test("should create directory if it doesn't exist", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(false);
+		Filets.createDirectory("/test/dir");
+		expect(fs.mkdirSync).toHaveBeenCalledWith("/test/dir", {
+			recursive: true,
+			mode: 0o755,
+		});
+	});
+
+	test("should throw error if directory already exists", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as any);
+		expect(() => Filets.createDirectory("/test/dir")).toThrow(
+			"Failed to create directory: Directory already exists: /test/dir",
+		);
+	});
+
+	test("should throw error if mkdir fails", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(false);
+		vi.mocked(fs.mkdirSync).mockImplementationOnce(() => {
+			throw new Error("Permission denied");
+		});
+		expect(() => Filets.createDirectory("/test/dir")).toThrow(
+			"Failed to create directory: Permission denied",
+		);
+	});
+});
+
+describe("isEmptyDirectory", () => {
+	test("should return true if directory is empty", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.statSync).mockReturnValue({
+			isDirectory: () => true,
+		} as any);
+		vi.mocked(fs.readdirSync).mockReturnValue([]);
+		expect(Filets.isEmptyDirectory("/test/dir")).toBe(true);
+	});
+
+	test("should return false if directory has contents", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.statSync).mockReturnValue({
+			isDirectory: () => true,
+		} as any);
+		vi.mocked(fs.readdirSync).mockReturnValue(["file1.txt", "file2.txt"] as any);
+		expect(Filets.isEmptyDirectory("/test/dir")).toBe(false);
+	});
+
+	test("should throw error if directory doesn't exist", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(false);
+		expect(() => Filets.isEmptyDirectory("/test/dir")).toThrow(
+			"Failed to check if directory is empty: Directory does not exist: /test/dir",
+		);
+	});
+});
+
+describe("copyDirectory", () => {
+	test("should copy directory recursively", () => {
+		// Mock source directory exists
+		vi.mocked(fs.existsSync).mockImplementation((filePath) => {
+			if (filePath === "/source" || filePath === "/source/subdir") return true;
+			return false;
+		});
+
+		// Mock directory stat
+		vi.mocked(fs.statSync).mockImplementation((filePath) => {
+			if (filePath === "/source") {
+				return { isDirectory: () => true } as any;
+			}
+			if (filePath === "/source/file1.txt") {
+				return { isDirectory: () => false } as any;
+			}
+			if (filePath === "/source/subdir") {
+				return { isDirectory: () => true } as any;
+			}
+			return { isDirectory: () => false } as any;
+		});
+
+		vi.mocked(fs.readdirSync).mockImplementation((dirPath: any) => {
+			if (dirPath === "/source") {
+				return ["file1.txt", "subdir"] as any;
+			}
+			if (dirPath === "/source/subdir") {
+				return [] as any;
+			}
+			return [] as any;
+		});
+
+		Filets.copyDirectory("/source", "/dest");
+		expect(fs.copyFileSync).toHaveBeenCalledWith(
+			"/source/file1.txt",
+			"/dest/file1.txt",
+		);
+	});
+
+	test("should throw error if source directory doesn't exist", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(false);
+		expect(() => Filets.copyDirectory("/source", "/dest")).toThrow(
+			"Failed to copy directory: Source directory does not exist: /source",
+		);
+	});
+});
+
+describe("moveDirectory", () => {
+	test("should move directory", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.statSync).mockReturnValue({
+			isDirectory: () => true,
+		} as any);
+		Filets.moveDirectory("/source", "/dest");
+		expect(fs.renameSync).toHaveBeenCalledWith("/source", "/dest");
+	});
+
+	test("should throw error if source directory doesn't exist", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(false);
+		expect(() => Filets.moveDirectory("/source", "/dest")).toThrow(
+			"Failed to move directory: Source directory does not exist: /source",
+		);
+	});
+});
 });

@@ -1,6 +1,6 @@
 {
   "name": "@joemaddalone/filets",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A TypeScript file management library",
   "license": "MIT",
   "author": "Joe Maddalone",
@@ -24,7 +24,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "fix": "biome check --fix ."
   },
   "files": [
     "dist"

@@ -1,11 +1,14 @@
 # Dependencies
 node_modules
-
 # Build
 dist
-
 # Test
 coverage
-
 # Bullshit sometimes...
 .DS_Store
+.agent
+.cursor
+AGENTS.MD
+.windsurf
+.github/copilot-instructions.md
+prompts

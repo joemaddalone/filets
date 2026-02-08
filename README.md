@@ -36,6 +36,12 @@ Filets.writeJsonFile("./my-file.json", { name: "My File" });
 // Write text data to a file
 Filets.writeTextFile("./my-file.txt", "Hello, World!");
 
+// Read text file content
+const content = Filets.readTextFile("./my-file.txt");
+
+// Append text content to a file
+Filets.appendTextFile("./my-file.txt", " More content");
+
 // Check if a file exists
 Filets.fileExists("./my-file.txt");
 
@@ -57,6 +63,24 @@ Filets.removeDirectory("./my-directory");
 // Copy a file
 Filets.copyFile("./my-file.txt", "./my-file-copy.txt");
 
+// Move a file
+Filets.moveFile("./my-file.txt", "./new-location/my-file.txt");
+
+// Rename a file
+Filets.renameFile("./old-name.txt", "./new-name.txt");
+
+// Create a directory explicitly (throws if exists)
+Filets.createDirectory("./my-new-directory");
+
+// Check if a directory is empty
+Filets.isEmptyDirectory("./my-directory");
+
+// Copy an entire directory
+Filets.copyDirectory("./source-directory", "./destination-directory");
+
+// Move an entire directory
+Filets.moveDirectory("./old-directory", "./new-directory");
+
 // Get absolute path
 Filets.getAbsolutePath("./my-file.txt");
 
@@ -65,4 +89,37 @@ Filets.getRelativePath("./my-file.txt", "./my-directory");
 
 // Join paths
 Filets.joinPaths("./my-directory", "my-file.txt");
+
+// Normalize path separators
+Filets.normalizePath("path//with///multiple/separators");
+
+// Get directory name from path
+Filets.getDirectoryName("/path/to/file.txt");
+
+// Get file extension
+Filets.getFileExtension("/path/to/file.txt");
+
+// Change file extension
+Filets.changeFileExtension("/path/to/file.txt", ".json");
+
+// Find files matching pattern
+Filets.findFiles("./directory", ".txt");
+
+// Find directories matching pattern
+Filets.findDirectories("./directory", "src");
+
+// Get complete file stats
+Filets.getFileStats("./my-file.txt");
+
+// Check if path is a file
+Filets.isFile("./my-file.txt");
+
+// Check if path is a directory
+Filets.isDirectory("./my-directory");
+
+// Get filename without path
+Filets.getFileName("/path/to/file.txt");
+
+// Get filename without extension
+Filets.getFileNameWithoutExtension("/path/to/file.txt");
 ```
