@@ -487,10 +487,8 @@ describe("Filets", () => {
 			vi.mocked(fs.statSync).mockReturnValue({
 				isDirectory: () => true,
 			} as any);
-		vi.mocked(fs.readdirSync).mockReturnValue(["file1.txt", "file2.txt"] as any);
-			expect(() => Filets.isEmptyDirectory("/test/dir")).toThrow(
-				"Failed to check if directory is empty: Directory does not exist: /test/dir",
-			);
+			vi.mocked(fs.readdirSync).mockReturnValue(["file1.txt", "file2.txt"] as any);
+			expect(Filets.isEmptyDirectory("/test/dir")).toBe(false);
 		});
 	});
 
